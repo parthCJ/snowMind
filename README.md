@@ -113,5 +113,12 @@ Week 3 behavior now uses API-first routing with automatic fallback:
 
 - Replace heuristic intent classifier with Cortex LLM call
 - Parse and format Cortex Analyst/Search responses
-- Add source attribution, feedback button, and persisted history
+- Add Streamlit in-Snowflake deployment configuration
+- Record and attach portfolio demo video
 - Add Snowflake Notebook tests for Analyst and Search endpoints
+
+## 8) Week 4 UI status
+
+- Query history is persisted locally at `data/app/query_history.json`
+- Feedback is logged at `data/app/feedback_log.jsonl`
+- Latest response panel includes source attribution and one-click feedback buttons
