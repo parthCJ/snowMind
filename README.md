@@ -59,7 +59,41 @@ pip install -e .
 streamlit run app\streamlit_app.py
 ```
 
-## 5) Current architecture
+## 5) Week 2 Cortex setup
+
+### Cortex Search setup
+
+```powershell
+cd d:\VSCODE\snowMind
+.\scripts\week2_setup_cortex.ps1 -Account <account> -User <user> -Role ACCOUNTADMIN -Warehouse COMPUTE_WH
+```
+
+Note: If your trial account/region does not support Cortex Search service DDL yet, the script will still complete base setup and continue with SQL fallback retrieval.
+
+### Cortex Search test
+
+```powershell
+cd d:\VSCODE\snowMind
+.\scripts\week2_test_cortex_search.ps1 -Account <account> -User <user> -Role ACCOUNTADMIN -Warehouse COMPUTE_WH
+```
+
+### Upload semantic model for Analyst
+
+```powershell
+cd d:\VSCODE\snowMind
+.\scripts\week2_upload_semantic_model.ps1 -Account <account> -User <user> -Role ACCOUNTADMIN -Warehouse COMPUTE_WH
+```
+
+### Analyst API smoke test
+
+```powershell
+cd d:\VSCODE\snowMind
+.\.venv\Scripts\python.exe scripts\test_cortex_analyst_api.py
+```
+
+Notebook starter for Week 2 checks: `notebooks/week2_cortex_checks.ipynb`.
+
+## 6) Current architecture
 
 LangGraph nodes:
 
@@ -70,7 +104,12 @@ LangGraph nodes:
 
 Implementation is in `src/snowmind/orchestration/state_graph.py`.
 
-## 6) Next implementation tasks
+Week 3 behavior now uses API-first routing with automatic fallback:
+
+- Structured questions: Cortex Analyst API -> fallback SQL query on Snowflake tables
+- Knowledge questions: Cortex Search API -> fallback query on `CORTEX.KNOWLEDGE_BASE`
+
+## 7) Next implementation tasks
 
 - Replace heuristic intent classifier with Cortex LLM call
 - Parse and format Cortex Analyst/Search responses

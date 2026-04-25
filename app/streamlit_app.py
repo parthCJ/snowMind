@@ -21,6 +21,9 @@ if run and query:
             "intent": "unstructured",
             "analyst_result": "",
             "search_result": "",
+            "analyst_source": "",
+            "search_source": "",
+            "source": "",
             "final_answer": "",
         }
     )
@@ -30,6 +33,7 @@ if run and query:
             "query": query,
             "intent": result.get("intent", ""),
             "answer": result.get("final_answer", "No response."),
+            "source": result.get("source", "unknown"),
         }
     )
 
@@ -38,6 +42,7 @@ if st.session_state.history:
     for idx, item in enumerate(reversed(st.session_state.history), start=1):
         st.markdown(f"**{idx}. Query:** {item['query']}")
         st.markdown(f"**Intent:** {item['intent']}")
+        st.markdown(f"**Source:** {item.get('source', 'unknown')}")
         st.markdown(f"**Answer:** {item['answer']}")
         st.markdown("---")
 

@@ -3,6 +3,7 @@ import requests
 from langgraph.graph import END, StateGraph
 
 from snowmind.config import settings
+from snowmind.tools.snowflake_fallback import analyst_fallback, search_fallback
 
 
 class AgentState(TypedDict):
@@ -10,6 +11,9 @@ class AgentState(TypedDict):
     intent: Literal["structured", "unstructured"]
     analyst_result: str
     search_result: str
+    analyst_source: str
+    search_source: str
+    source: str
     final_answer: str
 
 
@@ -23,40 +27,62 @@ def intent_classifier(state: AgentState) -> AgentState:
 
 
 def route_to_analyst(state: AgentState) -> AgentState:
-    if not settings.analyst_endpoint:
-        state["analyst_result"] = "Cortex Analyst endpoint not configured."
-        return state
+    if settings.analyst_endpoint and settings.api_token:
+        try:
+            payload = {"query": state["query"]}
+            headers = {"Authorization": f"Bearer {settings.api_token}"}
+            resp = requests.post(
+                settings.analyst_endpoint, json=payload, headers=headers, timeout=30
+            )
+            resp.raise_for_status()
+            state["analyst_result"] = resp.text
+            state["analyst_source"] = "cortex_analyst_api"
+            return state
+        except Exception as exc:
+            state["analyst_result"] = (
+                f"Analyst API failed, using SQL fallback. Details: {exc}\n\n{analyst_fallback(state['query'])}"
+            )
+            state["analyst_source"] = "snowflake_sql_fallback"
+            return state
 
-    payload = {"query": state["query"]}
-    headers = {"Authorization": f"Bearer {settings.api_token}"}
-    resp = requests.post(
-        settings.analyst_endpoint, json=payload, headers=headers, timeout=30
-    )
-    resp.raise_for_status()
-    state["analyst_result"] = resp.text
+    state["analyst_result"] = analyst_fallback(state["query"])
+    state["analyst_source"] = "snowflake_sql_fallback"
     return state
 
 
 def route_to_search(state: AgentState) -> AgentState:
-    if not settings.search_endpoint:
-        state["search_result"] = "Cortex Search endpoint not configured."
-        return state
+    if settings.search_endpoint and settings.api_token:
+        try:
+            payload = {"query": state["query"], "top_k": 5}
+            headers = {"Authorization": f"Bearer {settings.api_token}"}
+            resp = requests.post(
+                settings.search_endpoint, json=payload, headers=headers, timeout=30
+            )
+            resp.raise_for_status()
+            state["search_result"] = resp.text
+            state["search_source"] = "cortex_search_api"
+            return state
+        except Exception as exc:
+            state["search_result"] = (
+                f"Search API failed, using KB fallback. Details: {exc}\n\n{search_fallback(state['query'])}"
+            )
+            state["search_source"] = "knowledge_base_sql_fallback"
+            return state
 
-    payload = {"query": state["query"], "top_k": 5}
-    headers = {"Authorization": f"Bearer {settings.api_token}"}
-    resp = requests.post(
-        settings.search_endpoint, json=payload, headers=headers, timeout=30
-    )
-    resp.raise_for_status()
-    state["search_result"] = resp.text
+    state["search_result"] = search_fallback(state["query"])
+    state["search_source"] = "knowledge_base_sql_fallback"
     return state
 
 
 def response_synthesizer(state: AgentState) -> AgentState:
     if state.get("intent") == "structured":
-        state["final_answer"] = state.get("analyst_result", "")
+        result = state.get("analyst_result", "")
+        state["source"] = state.get("analyst_source", "unknown")
     else:
-        state["final_answer"] = state.get("search_result", "")
+        result = state.get("search_result", "")
+        state["source"] = state.get("search_source", "unknown")
+
+    state["final_answer"] = f"{result}\n\nSource: {state['source']}"
     return state
 
 

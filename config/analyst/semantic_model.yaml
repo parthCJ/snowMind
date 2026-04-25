@@ -1,0 +1,54 @@
+name: snowmind_semantic_model
+description: Semantic model for SnowMind structured analytics
+tables:
+  - name: orders
+    base_table:
+      database: SNOWMIND_DB
+      schema: SALES
+      table: ORDERS
+    dimensions:
+      - name: order_id
+        expr: ORDER_ID
+        data_type: VARCHAR
+      - name: order_date
+        expr: ORDER_DATE
+        data_type: DATE
+      - name: customer_id
+        expr: CUSTOMER_ID
+        data_type: VARCHAR
+      - name: region
+        expr: REGION
+        data_type: VARCHAR
+    measures:
+      - name: total_sales
+        expr: SUM(AMOUNT)
+        data_type: NUMBER
+      - name: order_count
+        expr: COUNT(*)
+        data_type: NUMBER
+  - name: profiles
+    base_table:
+      database: SNOWMIND_DB
+      schema: USERS
+      table: PROFILES
+    dimensions:
+      - name: user_id
+        expr: USER_ID
+        data_type: VARCHAR
+      - name: country
+        expr: COUNTRY
+        data_type: VARCHAR
+      - name: segment
+        expr: SEGMENT
+        data_type: VARCHAR
+      - name: signup_date
+        expr: SIGNUP_DATE
+        data_type: DATE
+relationships:
+  - name: orders_to_profiles
+    left_table: orders
+    right_table: profiles
+    relationship_columns:
+      - left_column: customer_id
+        right_column: user_id
+    join_type: left_outer
