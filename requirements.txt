@@ -1,0 +1,12 @@
+langgraph
+langchain
+langchain-core
+streamlit
+python-dotenv
+pydantic
+requests
+snowflake-connector-python
+snowflake-snowpark-python
+pandas
+httpx
+tenacity
